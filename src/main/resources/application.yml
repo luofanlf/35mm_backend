@@ -8,10 +8,11 @@ spring:
     name: backend_35mm
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql:aws://localhost:3306
+    url: jdbc:mysql://localhost:3306/35mm
     username: root
     password: 1234
 mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
   configuration:
     map-underscore-to-camel-case: false
     # 仅在开发环境开启日志
