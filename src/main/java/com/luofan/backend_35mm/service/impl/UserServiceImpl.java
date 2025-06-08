@@ -1,5 +1,6 @@
 package com.luofan.backend_35mm.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -8,9 +9,14 @@ import com.luofan.backend_35mm.exception.ErrorCode;
 import com.luofan.backend_35mm.mapper.UserMapper;
 import com.luofan.backend_35mm.model.entity.User;
 import com.luofan.backend_35mm.model.enums.UserRoleEnum;
+import com.luofan.backend_35mm.model.vo.LoginUserVO;
 import com.luofan.backend_35mm.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
 * @author luofan
@@ -18,8 +24,15 @@ import org.springframework.util.DigestUtils;
 * @createDate 2025-06-08 11:08:37
 */
 @Service
-public class UserServiceImpl extends ServiceImpl<UserMapper, User>
-    implements UserService{
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService{
+    private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
+    /**
+     * 用户注册
+     * @param userAccount
+     * @param userPassword
+     * @param checkPassword
+     * @return
+     */
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword){
         // 1.校验
@@ -61,11 +74,64 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     }
 
+    /**
+     * 加密密码
+     * @param userPassword
+     * @return
+     */
     @Override
     public String getEncryptPassword(String userPassword) {
         // 盐值，混淆密码
         final String SALT = "luofan";
         return DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
+    }
+
+    /**
+     * 用户登陆
+     * @param userAccount
+     * @param userPassword
+     * @return
+     */
+    @Override
+    public LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
+        //1.校验
+        if(StrUtil.hasBlank(userAccount,userPassword)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"参数为空");
+        }
+
+        //2.加密密码
+        String encryptPassword = getEncryptPassword(userPassword);
+
+        //查询用户是否存在
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userAccount",userAccount);
+        queryWrapper.eq("userPassword",encryptPassword);
+        User user = this.baseMapper.selectOne(queryWrapper);
+
+        if (user == null){
+            log.info("user account and password can not match,login failed");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"账户或密码错误");
+        }
+
+        //3.记录用户的登陆状态
+        request.getSession().setAttribute("USER_LOGIN_STATE",user);
+        return getLoginUserVO(user);
+
+    }
+
+    /**
+     * 获取登陆用户vo
+     * @param user
+     * @return
+     */
+    @Override
+    public LoginUserVO getLoginUserVO(User user) {
+        if (user == null){
+            return null;
+        }
+       LoginUserVO loginUserVO = new LoginUserVO();
+        BeanUtil.copyProperties(user,loginUserVO);
+        return loginUserVO;
     }
 
 }
