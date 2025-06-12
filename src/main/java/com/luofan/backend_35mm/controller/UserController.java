@@ -48,5 +48,14 @@ public class UserController {
         return ResultUtils.success(loginUserVO);
     }
 
+    /**
+     * 用户登出
+     */
+    @PostMapping("/logout")
+    public BaseResponse<Boolean> userLogout(HttpServletRequest request){
+        ThrowUtils.throwIf(request==null,ErrorCode.SYSTEM_ERROR);
+        Boolean result = this.userService.userLogout(request);
+        return ResultUtils.success(result);
+    }
 }
 
