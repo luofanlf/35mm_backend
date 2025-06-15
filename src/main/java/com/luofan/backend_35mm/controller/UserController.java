@@ -13,10 +13,7 @@ import com.luofan.backend_35mm.model.entity.User;
 import com.luofan.backend_35mm.model.vo.LoginUserVO;
 import com.luofan.backend_35mm.model.vo.UserVO;
 import com.luofan.backend_35mm.service.UserService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -63,6 +60,18 @@ public class UserController {
         Boolean result = this.userService.userLogout(request);
         return ResultUtils.success(result);
     }
+
+    /**
+     * 获取当前登陆用户
+     * @param request
+     * @return
+     */
+    @GetMapping("/get/login")
+    public BaseResponse<LoginUserVO> getLoginUser(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(userService.getLoginUserVO(loginUser));
+    }
+
 
     /**
      * 创建用户
